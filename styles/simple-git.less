@@ -1,0 +1,33 @@
+atom-text-editor.diff-view::shadow {
+  .line-number.plus:before {
+    font-family: 'Octicons Regular';
+    content: "\f05d" !important;
+    color: #a8ff60;
+  }
+
+  .line-number.minus:before {
+    font-family: 'Octicons Regular';
+    content: "\f0ca" !important;
+    color: #ffa860;
+  }
+
+  .minus.line {
+    text-decoration: line-through;
+  }
+
+  &.test {
+    background-color: #800;
+  }
+}
+
+atom-text-editor.diff-view.commit {
+  font-size: 10pt;
+}
+
+div.rm-ticket {
+  font-size: 16px;
+
+  input {
+    width: 100%;
+  }
+}
