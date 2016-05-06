@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "description": "Git commands to help your workflow, with a beautiful diff view",
   "keywords": [],
-  "repository": "https://github.com/atom/simple-git",
+  "repository": "https://github.com/mauricioszabo/simple-git",
   "license": "MIT",
   "engines": {
     "atom": ">=1.0.0 <2.0.0"
