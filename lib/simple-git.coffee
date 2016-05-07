@@ -36,57 +36,7 @@ module.exports =
     #     .stdout.toString()
     #   diff.newDiffView(path, out)
 
-    atom.commands.add 'atom-workspace', 'git:toggle-blame', => @blame()
-    #   editor = atom.workspace.getActiveTextEditor()
-    #   editor.blaming ?= false
-    #   visibleGutter = $('::shadow div').find('div.gutter:visible')
-    #   editor.lines = {}
-    #
-    #   if editor.blaming
-    #     editor.blaming = false
-    #     visibleGutter.css('width', editor.defaultSize)
-    #   else
-    #     editor.blaming = true
-    #     editor.defaultSize = visibleGutter.css('width')
-    #     visibleGutter.css('width', '250px')
-    #     path = editor.getPath()
-    #     blames = h.runGitCommand('blame', '-c', path).stdout.toString().split("\n")
-    #     blames.forEach (row, number) ->
-    #       [commit, author, timestamp] = row.split("\t")
-    #       if author
-    #         editor.lines[number] =
-    #           author: author.substring(1)
-    #           commit: commit
-    #           time: timestamp
-    #
-    #   editor.observer ?= new MutationObserver (mutations) => mutations.forEach (m) =>
-    #     for element in m.addedNodes
-    #       updateElement(element)
-    #   editor.observer.observe(visibleGutter[0], childList: true, subtree: true)
-    #
-    #   updateElement = (element) ->
-    #     element = $(element)
-    #     if editor.blaming
-    #       line = element.data('buffer-row')
-    #       return unless editor.lines[line]
-    #       {author, commit, time} = editor.lines[line]
-    #
-    #       small = element.find('small.blame')
-    #       if small.length == 0
-    #         small = $('<small>').addClass('blame')
-    #         element.prepend(small)
-    #       name = author.trim().replace(/\s.*/, '')
-    #       small.html("#{name} ").attr('title', "#{commit} (#{author}) at #{time}")
-    #     else
-    #       element.find('small.blame').detach()
-    #
-    #   # Re-update
-    #   for element in visibleGutter.find('div.line-number')
-    #     updateElement(element)
-  #   this.subscriptions.add(atom.commands.add('atom-workspace', {
-  #     'simple-git:toggle': () => this.toggle()
-  #   }));
-  # },
+    atom.commands.add 'atom-workspace', 'git:toggle-blame', => @toggleBlame()
 
   commitWithDiff: (gitParams, filename) ->
     cont = h.runGitCommand(gitParams...).stdout.toString()
@@ -106,7 +56,7 @@ module.exports =
       atom.notifications.addError("Failed to commit", detail: "Nothing to commit...
       Did you forgot to add files, or the current file have any changes?")
 
-  blame: ->
+  toggleBlame: ->
     editor = atom.workspace.getActiveTextEditor()
     editor.blameDecorations ?= []
 
@@ -118,11 +68,12 @@ module.exports =
         div.textContent = "#{author} made these changes on commit #{commit} at #{time}"
         div.classList.add('blame')
         div.classList.add('decoration')
-        # div.style.marginTop = '20px'
-        # div.style.marginBottom = '10px'
         marker = editor.markScreenPosition([parseInt(line), 0])
         editor.blameDecorations.push(marker)
         editor.decorateMarker(marker, type: 'block', position: 'before', item: div)
+        editor.onDidChange =>
+          @toggleBlame()
+          @toggleBlame()
 
     else
       editor.blameDecorations.forEach (m) -> m.destroy()
