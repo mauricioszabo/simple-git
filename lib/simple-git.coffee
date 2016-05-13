@@ -47,8 +47,6 @@ module.exports =
           h.treatErrors h.runGitCommand('commit', filename, '-m', commit)
         else
           h.treatErrors h.runGitCommand('commit', '-m', commit)
-        atom.getCurrentWindow().blurWebView()
-        atom.getCurrentWindow().focusOnWebView()
 
       diffEditor = new DiffEditor(editor)
       startLine = cont.match(/@@.*?(\d+)/)[1]
@@ -85,7 +83,7 @@ module.exports =
 
   getBlames: (path) ->
     formatted = {}
-    blames = h.runGitCommand('blame', '-c', path).stdout.toString().split("\n")
+    blames = h.runGitCommand('blame', '-M', '-w', '-c', path).stdout.toString().split("\n")
     lastLine = {}
 
     blames.forEach (row, number) =>
