@@ -47,6 +47,9 @@ module.exports =
           h.treatErrors h.runGitCommand('commit', filename, '-m', commit)
         else
           h.treatErrors h.runGitCommand('commit', '-m', commit)
+        atom.getCurrentWindow().blurWebView()
+        atom.getCurrentWindow().focusOnWebView()
+
       diffEditor = new DiffEditor(editor)
       startLine = cont.match(/@@.*?(\d+)/)[1]
       cont = cont.replace(/(.*?\n)*?@@.*?\n/, '')
