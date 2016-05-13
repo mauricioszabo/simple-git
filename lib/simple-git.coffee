@@ -58,7 +58,11 @@ module.exports =
 
   toggleBlame: ->
     editor = atom.workspace.getActiveTextEditor()
-    editor.blameDecorations ?= []
+    if !editor.blameDecorations
+      editor.blameDecorations = []
+      editor.onDidSave =>
+        @toggleBlame()
+        @toggleBlame()
 
     if editor.blameDecorations.length == 0
       blames = @getBlames(editor.getPath())
@@ -71,9 +75,6 @@ module.exports =
         marker = editor.markScreenPosition([parseInt(line), 0])
         editor.blameDecorations.push(marker)
         editor.decorateMarker(marker, type: 'block', position: 'before', item: div)
-        editor.onDidChange =>
-          @toggleBlame()
-          @toggleBlame()
 
     else
       editor.blameDecorations.forEach (m) -> m.destroy()
@@ -86,7 +87,7 @@ module.exports =
 
     blames.forEach (row, number) =>
       [commit, author, timestamp] = row.split("\t")
-      data = if author
+      data = if author && commit != '00000000'
         {author: author.substring(1).trim(), commit: commit, time: timestamp}
       else
         {author: "YOU", commit: '<none>', time: '<none>'}
