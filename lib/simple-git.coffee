@@ -3,6 +3,16 @@ h = require './helper-fns'
 DiffEditor = require './editor'
 
 module.exports =
+  config:
+    denyCommit:
+      description: "Deny commits on master branch"
+      type: 'boolean'
+      default: true
+    denyPush:
+      description: "Deny pushes to remote master branch"
+      type: 'boolean'
+      default: true
+
   activate: (state) ->
     atom.commands.add 'atom-workspace', 'git-repository:update-master', ->
       h.runAsyncGitCommand('checkout', 'master').then (code) ->
@@ -16,6 +26,11 @@ module.exports =
       @commitWithDiff(['diff', '--staged'])
 
     atom.commands.add 'atom-workspace', 'git:push-current-branch', ->
+      if atom.config.get('simple-git.denyPush') && h.currentBranch() == "master"
+        atom.notifications.addError("Failed to push",
+          detail: "You can't push to master.\nPlease create a branch and push from there")
+        return
+
       h.runAsyncGitCommand('push', '--set-upstream', 'origin', h.currentBranch())
 
     atom.commands.add 'atom-workspace', 'git:add-current-file', ->
@@ -23,6 +38,10 @@ module.exports =
 
     atom.commands.add 'atom-workspace', 'git:revert-current-file', ->
       h.treatErrors h.runGitCommand('checkout', h.getFilename())
+
+    atom.commands.add 'atom-workspace', 'git:new-branch-from-current', ->
+      h.prompt "Branch's name", (branch) ->
+        h.treatErrors h.runGitCommand('checkout', '-b', branch)
 
     atom.commands.add 'atom-workspace', 'git:show-diff-for-current-file', ->
       path = atom.workspace.getActiveTextEditor().getPath()
@@ -39,6 +58,11 @@ module.exports =
     atom.commands.add 'atom-workspace', 'git:toggle-blame', => @toggleBlame()
 
   commitWithDiff: (gitParams, filename) ->
+    if atom.config.get('simple-git.denyCommit') && h.currentBranch() == "master"
+      atom.notifications.addError("Failed to commit",
+        detail: "You can't commit into master.\nPlease create a branch and commit from there")
+      return
+
     cont = h.runGitCommand(gitParams...).stdout.toString()
 
     if cont
@@ -55,7 +79,8 @@ module.exports =
       diffEditor.view.classList.add('commit')
     else
       atom.notifications.addError("Failed to commit", detail: "Nothing to commit...
-      Did you forgot to add files, or the current file have any changes?")
+      Did you forgot to add files, or the
+      current file have any changes?")
 
   toggleBlame: ->
     editor = atom.workspace.getActiveTextEditor()
