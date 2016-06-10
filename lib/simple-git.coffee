@@ -58,10 +58,10 @@ module.exports =
         .stdout.toString()
       # contents = out.replace(/(.*?\n)*?@@.*?\n/, '')
 
-      startLine = out.match(/@@.*?(\d+)/)[1]
-      cont = out.replace(/(.*?\n)*?@@.*?\n/, '')
-      parts = path.split(/[\/\\]/)
-      file = parts[parts.length-1]
+      # startLine = out.match(/@@.*?(\d+)/)[1]
+      # cont = out.replace(/(.*?\n)*?@@.*?\n/, '')
+      # parts = path.split(/[\/\\]/)
+      # file = parts[parts.length-1]
       atom.workspace.open("(diff) #{file}").then (editor) ->
         diffEditor = new DiffEditor(editor)
         # diffEditor.setDiff(file, contents, 1)
