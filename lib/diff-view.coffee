@@ -9,8 +9,8 @@ module.exports = class DiffView extends ScrollView
       cmds.push("--follow")
       cmds.push(@filePath)
 
-    path = if @filePath @filePath else atom.workspace.getActiveTextEditor().getPath()
-    logs = child.spawnSync('git', cmds, cwd: path.dirname(path))
+    fpath = if @filePath @filePath else atom.workspace.getActiveTextEditor().getPath()
+    logs = child.spawnSync('git', cmds, cwd: path.dirname(fpath))
 
     div = $('<div>')
     logs.stdout.toString().split("\n").forEach (row) =>
@@ -18,7 +18,7 @@ module.exports = class DiffView extends ScrollView
       p = $('<p>')
       a = $('<a>').html(hash).on 'click', =>
         diff = child.spawnSync('git', ['diff', "#{hash}^..#{hash}", filePath],
-                               cwd: path.dirname(path)).stdout.toString()
+                               cwd: path.dirname(fpath)).stdout.toString()
         @setDiff(diff)
       a.css('cursor', 'pointer')
       p.append(a).append(" #{date} #{message} (#{author})")
