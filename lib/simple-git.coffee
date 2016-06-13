@@ -1,6 +1,6 @@
 {CompositeDisposable} = require 'atom'
 h = require './helper-fns'
-DiffEditor = require './editor'
+DiffView = require './diff-view'
 {Diff2Html} = require 'diff2html'
 {ScrollView} = require 'atom-space-pen-views'
 class Scroll extends ScrollView
@@ -22,6 +22,10 @@ module.exports =
       default: true
 
   activate: (state) ->
+    atom.workspace.addOpener (uri) =>
+      if uri.endsWith(" (diff)")
+        return new DiffView(uri.replace(/\s\(diff\)/, ""))
+
     atom.commands.add 'atom-workspace', 'git-repository:update-master', ->
       h.runAsyncGitCommand('checkout', 'master').then (code) ->
         if code == 0
@@ -52,20 +56,24 @@ module.exports =
         h.treatErrors h.runGitCommand('checkout', '-b', branch)
 
     atom.commands.add 'atom-workspace', 'git:show-diff-for-current-file', ->
+      # console.log("WOOO!")
       path = atom.workspace.getActiveTextEditor().getPath()
+      atom.workspace.open("#{path} (diff)")
+      # console.log("WOOO2!", path)
+      # diffView = new DiffView(path)
       # out = h.runGitCommand('diff', '-U999999', path)
-      out = h.runGitCommand('diff', path)
-        .stdout.toString()
+      # out = h.runGitCommand('diff', path)
+      #   .stdout.toString()
       # contents = out.replace(/(.*?\n)*?@@.*?\n/, '')
 
       # startLine = out.match(/@@.*?(\d+)/)[1]
       # cont = out.replace(/(.*?\n)*?@@.*?\n/, '')
       # parts = path.split(/[\/\\]/)
       # file = parts[parts.length-1]
-      atom.workspace.open("(diff) #{file}").then (editor) ->
-        diffEditor = new DiffEditor(editor)
-        # diffEditor.setDiff(file, contents, 1)
-        diffEditor.setDiff(file, cont, startLine)
+      # atom.workspace.open("(diff) #{file}").then (editor) ->
+      #   diffEditor = new DiffEditor(editor)
+      #   # diffEditor.setDiff(file, contents, 1)
+      #   diffEditor.setDiff(file, cont, startLine)
 
         # # LOGS
         # div = $('<div>')
@@ -111,6 +119,7 @@ module.exports =
         else
           h.treatErrors h.runGitCommand('commit', '-m', commit)
 
+      div.addClass('parent-diff-view commit')
       div2 = document.createElement('div')
       div2.classList.add('diff-view', 'commit')
       div2.innerHTML = Diff2Html.getPrettyHtml(cont)
