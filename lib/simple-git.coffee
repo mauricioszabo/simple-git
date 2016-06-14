@@ -23,7 +23,6 @@ module.exports =
 
   activate: (state) ->
     atom.workspace.addOpener (uri) =>
-      console.log("URI", uri)
       if uri.startsWith("diff://")
         return new DiffView(uri.replace(/\s\(diff\)/, "").replace(/diff:\/\//, ""))
 
@@ -57,51 +56,8 @@ module.exports =
         h.treatErrors h.runGitCommand('checkout', '-b', branch)
 
     atom.commands.add 'atom-workspace', 'git:show-diff-for-current-file', ->
-      # console.log("WOOO!")
       path = atom.workspace.getActiveTextEditor().getPath()
       atom.workspace.open("diff://#{path} (diff)")
-      # console.log("WOOO2!", path)
-      # diffView = new DiffView(path)
-      # out = h.runGitCommand('diff', '-U999999', path)
-      # out = h.runGitCommand('diff', path)
-      #   .stdout.toString()
-      # contents = out.replace(/(.*?\n)*?@@.*?\n/, '')
-
-      # startLine = out.match(/@@.*?(\d+)/)[1]
-      # cont = out.replace(/(.*?\n)*?@@.*?\n/, '')
-      # parts = path.split(/[\/\\]/)
-      # file = parts[parts.length-1]
-      # atom.workspace.open("(diff) #{file}").then (editor) ->
-      #   diffEditor = new DiffEditor(editor)
-      #   # diffEditor.setDiff(file, contents, 1)
-      #   diffEditor.setDiff(file, cont, startLine)
-
-        # # LOGS
-        # div = $('<div>')
-        # $('::shadow div').find('.scroll-view:visible').parent().append(div)
-        # div.append(
-        #   $('<p>').append(
-        #     $('<a>').html("HEAD").on('click', => diffEditor.setDiff(filePath, contents))
-        #   )
-        # )
-        #
-        # out = child.spawnSync('git', ['log', '--date=short',
-        #   '--format=format:%h##..##%ad##..##%an##..##%s', '--follow', filePath],
-        #   cwd: path.dirname(path))
-        #
-        # out.stdout.toString().split("\n").forEach (row) =>
-        #   [hash, date, author, message] = row.split("##..##")
-        #   p = $('<p>')
-        #   a = $('<a>').html(hash).on 'click', =>
-        #     diff = child.spawnSync('git', ['diff',
-        #       "#{hash}^..#{hash}", filePath], cwd: path.dirname(filePath)).stdout.toString()
-        #     diffEditor.setDiff(file, diff.replace(/(.*?\n)*?@@.*?\n/, ''))
-        #   a.css('cursor', 'pointer')
-        #   p.append(a).append(" #{date} #{message} (#{author})")
-        #   div.append(p)
-        #
-        # div.css(width: '400px', height: '100%', float: 'right', 'background': 'white')
-        # div.css('margin-right': '15px', 'overflow': 'scroll')
 
     atom.commands.add 'atom-workspace', 'git:toggle-blame', => @toggleBlame()
 
