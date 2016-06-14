@@ -45,7 +45,44 @@ div.rm-ticket {
 div.decoration.blame {
   border-top: solid 1px;
 }
-div.diff-view.commit .d2h-cntx {
+
+div.diff-for-file {
+  background: white;
+  width: 100%;
+  height: 100%;
+}
+
+div.diff-view.for-file {
+  float: left;
+  max-width: 75%;
+  min-width: 60%;
+  height: 100%;
+}
+
+div.diff-logs {
+  // display: flex;
+  border: 2px solid;
+}
+
+// div.diff-logs {
+//   width: 400px;
+//   height: 100%;
+//   float: right;
+//   background: white;
+//   margin-right: 15px;
+//   overflow: scroll;
+// }
+
+// D2H
+div.diff-view .d2h-cntx {
   background-color: #FFF !important;
   order-color: #b4e2b4;
+}
+
+div.diff-view.commit .d2h-diff-table {
+  font-size: 8pt !important;
+}
+
+div.diff-view.commit .d2h-diff-tbody>tr>td>div {
+    height: 12.5px;
 }
