@@ -23,8 +23,9 @@ module.exports =
 
   activate: (state) ->
     atom.workspace.addOpener (uri) =>
-      if uri.endsWith(" (diff)")
-        return new DiffView(uri.replace(/\s\(diff\)/, ""))
+      console.log("URI", uri)
+      if uri.startsWith("diff://")
+        return new DiffView(uri.replace(/\s\(diff\)/, "").replace(/diff:\/\//, ""))
 
     atom.commands.add 'atom-workspace', 'git-repository:update-master', ->
       h.runAsyncGitCommand('checkout', 'master').then (code) ->
@@ -58,7 +59,7 @@ module.exports =
     atom.commands.add 'atom-workspace', 'git:show-diff-for-current-file', ->
       # console.log("WOOO!")
       path = atom.workspace.getActiveTextEditor().getPath()
-      atom.workspace.open("#{path} (diff)")
+      atom.workspace.open("diff://#{path} (diff)")
       # console.log("WOOO2!", path)
       # diffView = new DiffView(path)
       # out = h.runGitCommand('diff', '-U999999', path)
@@ -119,11 +120,13 @@ module.exports =
         else
           h.treatErrors h.runGitCommand('commit', '-m', commit)
 
-      div.addClass('parent-diff-view commit')
+      parentDiv = document.createElement('div')
+      div.append(parentDiv)
       div2 = document.createElement('div')
       div2.classList.add('diff-view', 'commit')
       div2.innerHTML = Diff2Html.getPrettyHtml(cont)
-      div.append(div2)
+      parentDiv.classList.add('parent-diff-view', 'commit')
+      parentDiv.appendChild(div2)
     else
       atom.notifications.addError("Failed to commit", detail: "Nothing to commit...
       Did you forgot to add files, or the
