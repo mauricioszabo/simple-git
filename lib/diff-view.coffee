@@ -15,7 +15,11 @@ module.exports = class DiffView extends ScrollView
     @filePath = null if @filePath == "Full Project"
     @fpath = if @filePath then @filePath else atom.workspace.getActiveTextEditor().getPath()
 
-  getTitle: -> "#{@filePath} (diff)"
+  getTitle: ->
+    if @filePath
+      "#{@filePath} (diff)"
+    else
+      "Full Project Diff"
 
   attached: ->
     diff = if @filePath
@@ -38,8 +42,12 @@ module.exports = class DiffView extends ScrollView
       a = document.createElement('a')
       a.innerHTML = hash
       a.onclick = =>
-        diff = child.spawnSync('git', ['diff', "#{hash}^..#{hash}", @fpath],
-                               cwd: path.dirname(@fpath)).stdout.toString()
+        diff = if @filePath
+          child.spawnSync('git', ['diff', "#{hash}^..#{hash}", @fpath],
+                                 cwd: path.dirname(@fpath)).stdout.toString()
+        else
+          child.spawnSync('git', ['diff', "#{hash}^..#{hash}"],
+                                 cwd: path.dirname(@fpath)).stdout.toString()
         @diffView.html Diff2Html.getPrettyHtml(diff)
       a.style.cursor = 'pointer'
       p.appendChild(a)

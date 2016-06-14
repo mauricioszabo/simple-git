@@ -57,7 +57,11 @@ module.exports =
 
     atom.commands.add 'atom-workspace', 'git:show-diff-for-current-file', ->
       path = atom.workspace.getActiveTextEditor().getPath()
-      atom.workspace.open("diff://#{path} (diff)")
+      atom.workspace.open("diff://#{path}")
+
+    atom.commands.add 'atom-workspace', 'git:show-diff-for-project', ->
+      path = atom.workspace.getActiveTextEditor().getPath()
+      atom.workspace.open("diff://Full Project")
 
     atom.commands.add 'atom-workspace', 'git:toggle-blame', => @toggleBlame()
 
