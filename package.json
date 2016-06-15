@@ -1,8 +1,8 @@
 {
-  "name": "simple-git",
+  "name": "Simple GIT",
   "main": "./lib/simple-git",
   "version": "0.0.0",
-  "description": "Git commands to help your workflow, with a beautiful diff view",
+  "description": "Git commands to help your workflow.",
   "keywords": [],
   "repository": "https://github.com/mauricioszabo/simple-git",
   "license": "MIT",
