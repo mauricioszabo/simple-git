@@ -1,5 +1,5 @@
 {
-  "name": "Simple GIT",
+  "name": "simple-git",
   "main": "./lib/simple-git",
   "version": "0.0.0",
   "description": "Git commands to help your workflow.",
