@@ -1,9 +1,31 @@
 {CompositeDisposable} = require 'atom'
 h = require './helper-fns'
-DiffEditor = require './editor'
+DiffView = require './diff-view'
+{Diff2Html} = require 'diff2html'
+{ScrollView} = require 'atom-space-pen-views'
+class Scroll extends ScrollView
+  @content: ->
+    @div()
+  initialize: (txt) ->
+    super
+    @text(txt)
 
 module.exports =
+  config:
+    denyCommit:
+      description: "Deny commits on master branch"
+      type: 'boolean'
+      default: true
+    denyPush:
+      description: "Deny pushes to remote master branch"
+      type: 'boolean'
+      default: true
+
   activate: (state) ->
+    atom.workspace.addOpener (uri) =>
+      if uri.startsWith("diff://")
+        return new DiffView(uri.replace(/\s\(diff\)/, "").replace(/diff:\/\//, ""))
+
     atom.commands.add 'atom-workspace', 'git-repository:update-master', ->
       h.runAsyncGitCommand('checkout', 'master').then (code) ->
         if code == 0
@@ -16,6 +38,11 @@ module.exports =
       @commitWithDiff(['diff', '--staged'])
 
     atom.commands.add 'atom-workspace', 'git:push-current-branch', ->
+      if atom.config.get('simple-git.denyPush') && h.currentBranch() == "master"
+        atom.notifications.addError("Failed to push",
+          detail: "You can't push to master.\nPlease create a branch and push from there")
+        return
+
       h.runAsyncGitCommand('push', '--set-upstream', 'origin', h.currentBranch())
 
     atom.commands.add 'atom-workspace', 'git:add-current-file', ->
@@ -24,38 +51,46 @@ module.exports =
     atom.commands.add 'atom-workspace', 'git:revert-current-file', ->
       h.treatErrors h.runGitCommand('checkout', h.getFilename())
 
+    atom.commands.add 'atom-workspace', 'git:new-branch-from-current', ->
+      h.prompt "Branch's name", (branch) ->
+        h.treatErrors h.runGitCommand('checkout', '-b', branch)
+
     atom.commands.add 'atom-workspace', 'git:show-diff-for-current-file', ->
       path = atom.workspace.getActiveTextEditor().getPath()
-      out = h.runGitCommand('diff', '-U999999', path)
-        .stdout.toString()
-      diff.newDiffView(path, out)
+      atom.workspace.open("diff://#{path}")
 
-    # atom.commands.add 'atom-workspace', 'git:diff-layer', ->
-    #   path = atom.workspace.getActiveTextEditor().getPath()
-    #   out = h.runGitCommand('diff', '-U999999', path)
-    #     .stdout.toString()
-    #   diff.newDiffView(path, out)
+    atom.commands.add 'atom-workspace', 'git:show-diff-for-project', ->
+      path = atom.workspace.getActiveTextEditor().getPath()
+      atom.workspace.open("diff://Full Project")
 
     atom.commands.add 'atom-workspace', 'git:toggle-blame', => @toggleBlame()
 
   commitWithDiff: (gitParams, filename) ->
+    if atom.config.get('simple-git.denyCommit') && h.currentBranch() == "master"
+      atom.notifications.addError("Failed to commit",
+        detail: "You can't commit into master.\nPlease create a branch and commit from there")
+      return
+
     cont = h.runGitCommand(gitParams...).stdout.toString()
 
     if cont
-      editor = h.promptEditor "Type your commit message", (commit) ->
+      div = h.prompt "Type your commit message", (commit) ->
         if filename
           h.treatErrors h.runGitCommand('commit', filename, '-m', commit)
         else
           h.treatErrors h.runGitCommand('commit', '-m', commit)
 
-      diffEditor = new DiffEditor(editor)
-      startLine = cont.match(/@@.*?(\d+)/)[1]
-      cont = cont.replace(/(.*?\n)*?@@.*?\n/, '')
-      diffEditor.setDiff(h.getFilename(), cont, parseInt(startLine))
-      diffEditor.view.classList.add('commit')
+      parentDiv = document.createElement('div')
+      div.append(parentDiv)
+      div2 = document.createElement('div')
+      div2.classList.add('diff-view', 'commit')
+      div2.innerHTML = Diff2Html.getPrettyHtml(cont)
+      parentDiv.classList.add('parent-diff-view', 'commit')
+      parentDiv.appendChild(div2)
     else
       atom.notifications.addError("Failed to commit", detail: "Nothing to commit...
-      Did you forgot to add files, or the current file have any changes?")
+      Did you forgot to add files, or the
+      current file have any changes?")
 
   toggleBlame: ->
     editor = atom.workspace.getActiveTextEditor()

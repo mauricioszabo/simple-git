@@ -1,48 +1,55 @@
-{$} = require 'atom-space-pen-views'
+{Diff2Html} = require 'diff2html'
+{ScrollView} = require 'atom-space-pen-views'
 path = require 'path'
 child = require 'child_process'
-Editor = require './editor'
 
-module.exports =
-  newDiffView: (filePath, contents) ->
-    if contents.trim() == ''
-      contents = atom.workspace.getActiveTextEditor().getText()
-      contents = contents.replace(/^(.?)/gm, " $1")
+module.exports = class DiffView extends ScrollView
+  @content: ->
+    @div class: "diff-for-file", =>
+      @div class: "parent-diff-view", =>
+        @div class: 'diff-view for-file', outlet: "diffView"
+        @div class: 'diff-logs', outlet: "logsView"
 
-    contents = contents.replace(/(.*?\n)*?@@.*?\n/, '')
+  initialize: (@filePath) ->
+    super
+    @filePath = null if @filePath == "Full Project"
+    @fpath = if @filePath then @filePath else atom.workspace.getActiveTextEditor().getPath()
 
-    parts = filePath.split(/[\/\\]/)
-    file = parts[parts.length-1]
+  getTitle: ->
+    if @filePath
+      "#{@filePath} (diff)"
+    else
+      "Full Project Diff"
 
-    promise = atom.workspace.open("(diff) #{file}")
-    promise.promiseDispatch =>
-      atomEditor = promise.valueOf()
-      editor = new Editor(atomEditor)
-      editor.setDiff(filePath, contents)
+  attached: ->
+    diff = if @filePath
+      child.spawnSync('git', ['diff', @fpath], cwd: path.dirname(@fpath)).stdout.toString()
+    else
+      child.spawnSync('git', ['diff'], cwd: path.dirname(@fpath)).stdout.toString()
 
-      # LOGS
-      div = $('<div>')
-      $('::shadow div').find('.scroll-view:visible').parent().append(div)
-      div.append(
-        $('<p>').append(
-          $('<a>').html("HEAD").on('click', => editor.setDiff(filePath, contents))
-        )
-      )
+    @diffView.html Diff2Html.getPrettyHtml(diff)
 
-      out = child.spawnSync('git', ['log', '--date=short',
-        '--format=format:%h##..##%ad##..##%an##..##%s', '--follow', filePath],
-        cwd: path.dirname(filePath))
+    cmds = ['log', '--date=short', '--format=format:%h##..##%ad##..##%an##..##%s']
+    if @filePath
+      cmds.push("--follow")
+      cmds.push(@filePath)
 
-      out.stdout.toString().split("\n").forEach (row) =>
-        [hash, date, author, message] = row.split("##..##")
-        p = $('<p>')
-        a = $('<a>').html(hash).on 'click', =>
-          diff = child.spawnSync('git', ['diff', '-U999999',
-            "#{hash}^..#{hash}", filePath], cwd: path.dirname(filePath)).stdout.toString()
-          editor.setDiff(filePath, diff.replace(/(.*?\n)*?@@.*?\n/, ''))
-        a.css('cursor', 'pointer')
-        p.append(a).append(" #{date} #{message} (#{author})")
-        div.append(p)
+    logs = child.spawnSync('git', cmds, cwd: path.dirname(@fpath))
 
-      div.css(width: '400px', height: '100%', float: 'right', 'background': 'white')
-      div.css('margin-right': '15px', 'overflow': 'scroll')
+    logs.stdout.toString().split("\n").forEach (row) =>
+      [hash, date, author, message] = row.split("##..##")
+      p = document.createElement('p')
+      a = document.createElement('a')
+      a.innerHTML = hash
+      a.onclick = =>
+        diff = if @filePath
+          child.spawnSync('git', ['diff', "#{hash}^..#{hash}", @fpath],
+                                 cwd: path.dirname(@fpath)).stdout.toString()
+        else
+          child.spawnSync('git', ['diff', "#{hash}^..#{hash}"],
+                                 cwd: path.dirname(@fpath)).stdout.toString()
+        @diffView.html Diff2Html.getPrettyHtml(diff)
+      a.style.cursor = 'pointer'
+      p.appendChild(a)
+      p.insertAdjacentText("beforeEnd", " #{date} #{message} (#{author})")
+      @logsView.append(p)

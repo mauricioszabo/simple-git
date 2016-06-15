@@ -54,14 +54,11 @@ module.exports =
         files[fileName] += "#{row}\n"
     files
 
-  promptEditor: (placehold, fn) ->
+  prompt: (placehold, fn) ->
     te = new TextEditorView(mini: true, placeholderText: placehold)
     div = $('<div>')
     div.append(te)
-    editor = new TextEditor()
-    div.append(atom.views.getView(editor))
     panel = atom.workspace.addModalPanel(item: div)
-
     atom.commands.add te.element, 'core:confirm': ->
       fn(te.getText())
       panel.destroy()
@@ -72,22 +69,4 @@ module.exports =
     setTimeout ->
       te.focus()
       te.getModel().scrollToCursorPosition()
-
-    workspaceSize = $(atom.views.getView(atom.workspace)).height() * 0.8
-    editorView = $(atom.views.getView(editor))
-    editorView.height(workspaceSize)
-    editor
-
-  prompt: (placehold, fn) ->
-    te = new TextEditorView(mini: true, placeholderText: placehold)
-    panel = atom.workspace.addModalPanel(item: te)
-    atom.commands.add te.element, 'core:confirm': ->
-      fn(te.getText())
-      panel.destroy()
-      atom.views.getView(atom.workspace).focus()
-    , 'core:cancel': ->
-      panel.destroy()
-      atom.views.getView(atom.workspace).focus()
-    setTimeout ->
-      te.focus()
-      te.getModel().scrollToCursorPosition()
+    div
