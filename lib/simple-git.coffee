@@ -79,6 +79,9 @@ module.exports =
           h.treatErrors h.runGitCommand('commit', filename, '-m', commit)
         else
           h.treatErrors h.runGitCommand('commit', '-m', commit)
+        atom.project.getRepositories().forEach (repo) ->
+          repo.refreshIndex()
+          repo.refreshStatus()
 
       parentDiv = document.createElement('div')
       div.append(parentDiv)
