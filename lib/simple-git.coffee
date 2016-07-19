@@ -26,10 +26,10 @@ module.exports =
       if uri.startsWith("diff://")
         return new DiffView(uri.replace(/\s\(diff\)/, "").replace(/diff:\/\//, ""))
 
-    atom.commands.add 'atom-workspace', 'git-repository:update-master', ->
-      h.runAsyncGitCommand('checkout', 'master').then (code) ->
+    atom.commands.add 'atom-workspace', 'git-repository:update-master', =>
+      h.runAsyncGitCommand('checkout', 'master').then (code) =>
         if code == 0
-          h.runAsyncGitCommand('pull', 'origin')
+          h.runAsyncGitCommand('pull', 'origin').then => @refreshRepos()
 
     atom.commands.add 'atom-workspace', 'git:quick-commit-current-file', =>
       @commitWithDiff(['diff', 'HEAD', h.getFilename()], h.getFilename())
@@ -51,9 +51,10 @@ module.exports =
     atom.commands.add 'atom-workspace', 'git:revert-current-file', ->
       h.treatErrors h.runGitCommand('checkout', h.getFilename())
 
-    atom.commands.add 'atom-workspace', 'git:new-branch-from-current', ->
-      h.prompt "Branch's name", (branch) ->
+    atom.commands.add 'atom-workspace', 'git:new-branch-from-current', =>
+      h.prompt "Branch's name", (branch) =>
         h.treatErrors h.runGitCommand('checkout', '-b', branch)
+        @refreshRepos()
 
     atom.commands.add 'atom-workspace', 'git:show-diff-for-current-file', ->
       path = atom.workspace.getActiveTextEditor().getPath()
@@ -74,14 +75,12 @@ module.exports =
     cont = h.runGitCommand(gitParams...).stdout.toString()
 
     if cont
-      div = h.prompt "Type your commit message", (commit) ->
+      div = h.prompt "Type your commit message", (commit) =>
         if filename
           h.treatErrors h.runGitCommand('commit', filename, '-m', commit)
         else
           h.treatErrors h.runGitCommand('commit', '-m', commit)
-        atom.project.getRepositories().forEach (repo) ->
-          repo.refreshIndex()
-          repo.refreshStatus()
+        @refreshRepos()
 
       parentDiv = document.createElement('div')
       div.append(parentDiv)
@@ -94,6 +93,11 @@ module.exports =
       atom.notifications.addError("Failed to commit", detail: "Nothing to commit...
       Did you forgot to add files, or the
       current file have any changes?")
+
+  refreshRepos: ->
+    atom.project.getRepositories().forEach (repo) =>
+      repo.refreshIndex()
+      repo.refreshStatus()
 
   toggleBlame: ->
     editor = atom.workspace.getActiveTextEditor()
