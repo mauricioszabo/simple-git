@@ -1,8 +1,12 @@
 {CompositeDisposable} = require 'atom'
-h = require './helper-fns'
-DiffView = require './diff-view'
 {Diff2Html} = require 'diff2html'
 {ScrollView} = require 'atom-space-pen-views'
+
+DiffView = require './diff-view'
+
+generator = require './diff-generator'
+h = require './helper-fns'
+
 class Scroll extends ScrollView
   @content: ->
     @div()
@@ -10,7 +14,7 @@ class Scroll extends ScrollView
     super
     @text(txt)
 
-module.exports =
+module.exports = window.simple =
   config:
     denyCommit:
       description: "Deny commits on master branch"
@@ -100,9 +104,11 @@ module.exports =
       repo.refreshStatus()
 
   toggleBlame: ->
+    @blameDecorations ?= new Map()
     editor = atom.workspace.getActiveTextEditor()
-    if !editor.blameDecorations
-      editor.blameDecorations = []
+    if !@blameDecorations.has(editor)
+      decorations = []
+      @blameDecorations.set(editor, decorations)
       editor.onDidSave =>
         @toggleBlame()
         @toggleBlame()
@@ -116,12 +122,12 @@ module.exports =
         div.classList.add('blame')
         div.classList.add('decoration')
         marker = editor.markScreenPosition([parseInt(line), 0])
-        editor.blameDecorations.push(marker)
+        decorations.push(marker)
         editor.decorateMarker(marker, type: 'block', position: 'before', item: div)
 
     else
-      editor.blameDecorations.forEach (m) -> m.destroy()
-      editor.blameDecorations = []
+      @blameDecorations.get(editor).forEach (m) -> m.destroy()
+      @blameDecorations.delete(editor)
 
   getBlames: (path) ->
     formatted = {}
@@ -146,8 +152,34 @@ module.exports =
     [a2, c2, t2] = [author, commit, time]
 
     a1 == a2 && c1 == c2 && t1 == t2
+
+  toggleDiffLayer: (editor) ->
+    # @diffDecorations ?= new Map()
+    #
+    # if @diffDecorations.has(editor)
+    #   @diffDecorations.get(editor).forEach (m) -> m.destroy()
+    #   @diffDecorations.delete(editor)
+    # else
+      repo = atom.project.getRepositories()[0]
+      decorations = []
+      path = repo.relativize(editor.getPath())
+      oldText = h.runGitCommand('show', "HEAD:#{path}").stdout.toString()
+      newText = editor.getText()
+      diffs =  generator.fromLines(oldText, newText)
+
+      for {del}, line in diffs when del?
+        console.log del, line
+        div = document.createElement('div')
+        sub = document.createElement('strike')
+        div.appendChild(sub)
+        sub.textContent = del
+        div.classList.add('diff')
+        div.classList.add('remove')
+        marker = editor.markScreenPosition([line, 0])
+        decorations.push(marker)
+        editor.decorateMarker(marker, type: 'block', position: 'before', item: div)
 #
-#   deactivate() {
+# deactivate() {
 #   },
 #
 #   serialize() {
