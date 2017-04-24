@@ -1,7 +1,7 @@
 {
   "name": "simple-git",
   "main": "./lib/simple-git",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Git commands to help your workflow.",
   "keywords": [],
   "repository": "https://github.com/mauricioszabo/simple-git",
