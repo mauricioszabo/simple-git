@@ -77,9 +77,9 @@ module.exports =
     if cont
       div = h.prompt "Type your commit message", (commit) =>
         if filename
-          h.treatErrors h.runGitCommand('commit', filename, '-m', commit)
+          h.treatErrors h.runGitCommand('commit', filename, '--no-verify', '-m', commit)
         else
-          h.treatErrors h.runGitCommand('commit', '-m', commit)
+          h.treatErrors h.runGitCommand('commit', '--no-verify', '-m', commit)
         @refreshRepos()
 
       parentDiv = document.createElement('div')
