@@ -13,12 +13,16 @@
         editor-view (.. js/atom -views (getView editor))
         div (js/document.createElement "div")
         panel (.. js/atom -workspace (addModalPanel #js {:item div}))
+        style (.. js/atom -views (getView panel) -style)
         destroy-and-focus (fn []
                             (.destroy panel)
                             (.. js/atom -views (getView (.-workspace js/atom)) focus))]
 
-    (.. js/atom -views (getView panel) -style (setProperty "height" "100%"))
+    (.setProperty style "height" "100%")
+    (.setProperty style "max-height" "90%")
     (.. div -style (setProperty "height" "100%"))
+    (.. div -style (setProperty "display" "flex"))
+    (.. div -style (setProperty "flex-direction" "column"))
     (.append div editor-view)
     (doto (.-commands js/atom)
           (.add (.-element editor) "core:confirm" (fn []
@@ -63,7 +67,20 @@
   (p/let [file (cmds/current-file!)
           {:keys [output]} (cmds/run-git "diff" "HEAD" file)
           commit-msg (diff-prompt! (str "Commit message for " (simplify file)) output)]
-    (cmds/run-git-treating-errors "commit" file "-m" commit-msg)))
+    (if commit-msg
+      (cmds/run-git-treating-errors "commit" file "-m" commit-msg)
+      (cmds/info! "Not commiting" "Can't commit with an empty message"))))
+
+(defn- commit! []
+  (p/let [{:keys [output]} (cmds/run-git "diff" "--staged")
+          commit-msg (diff-prompt! "Commit message" output)]
+    (if commit-msg
+      (cmds/run-git-treating-errors "commit" "-m" commit-msg)
+      (cmds/info! "Not commiting" "Can't commit with an empty message"))))
+
+(defn- add-cmd! [command fun]
+  (.add @subscriptions
+        (.. js/atom -commands (add "atom-text-editor" (str "git:" command) fun))))
 
 (defn activate [state]
   (reset! atom-state state)
@@ -72,10 +89,8 @@
                            (add "atom-text-editor"
                                 "git:add-current-file"
                                 #(cmds/run-git-treating-errors "add" (cmds/current-file!)))))
-  (.add @subscriptions (.. js/atom -commands
-                           (add "atom-text-editor"
-                                "git:quick-commit-current-file"
-                                quick-commit!))))
+  (add-cmd! "quick-commit-current-file" quick-commit!)
+  (add-cmd! "commit" commit!))
 
 
 (defn deactivate [state]
