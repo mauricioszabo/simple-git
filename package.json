@@ -1,0 +1,16 @@
+{
+  "name": "simple-git",
+  "main": "./lib/main.js",
+  "version": "0.0.0",
+  "description": "A short description of your package",
+  "keywords": [],
+  "repository": "https://github.com/mauricioszabo/simple-git",
+  "license": "MIT",
+  "engines": {
+    "atom": ">=1.0.0 <2.0.0"
+  },
+  "devDependencies": {
+    "diff2html": "^3.4.9",
+    "shadow-cljs": "^2.15.5"
+  }
+}

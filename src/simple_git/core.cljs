@@ -18,6 +18,10 @@
                             (.destroy panel)
                             (.. js/atom -views (getView (.-workspace js/atom)) focus))]
 
+    (.setProperty style "max-height" "90%")
+    (.setProperty style "display" "flex")
+    (.setProperty style "flex-direction" "column")
+    (.. div -style (setProperty "overflow" "scroll"))
     (.append div editor-view)
     (doto (.-commands js/atom)
           (.add (.-element editor) "core:confirm" (fn []
@@ -44,12 +48,16 @@
   (let [p (p/deferred)
         html (generate-view placeholder p)
         diff-elem (js/document.createElement "div")
-        style (.-style diff-elem)]
-    (.setProperty style "height" "100%")
-    (.setProperty style "overflow" "scroll")
+        style (.-style diff-elem)
+        outer-div (js/document.createElement "div")]
+
+    ()
+    ; (.setProperty style "height" "100%")
+    ; (.setProperty style "overflow" "scroll")
     (aset diff-elem "innerHTML" (diff->html diff-str))
     (.. diff-elem -classList (add "native-key-bindings"))
-    (.append html diff-elem)
+    (.append outer-div diff-elem)
+    (.append html outer-div)
     p))
 
 (defn- simplify [string]
