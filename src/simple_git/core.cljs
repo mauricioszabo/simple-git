@@ -18,11 +18,6 @@
                             (.destroy panel)
                             (.. js/atom -views (getView (.-workspace js/atom)) focus))]
 
-    (.setProperty style "height" "100%")
-    (.setProperty style "max-height" "90%")
-    (.. div -style (setProperty "height" "100%"))
-    (.. div -style (setProperty "display" "flex"))
-    (.. div -style (setProperty "flex-direction" "column"))
     (.append div editor-view)
     (doto (.-commands js/atom)
           (.add (.-element editor) "core:confirm" (fn []
