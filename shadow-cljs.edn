@@ -1,0 +1,16 @@
+{:source-paths ["src"]
+
+ :dependencies [[funcool/promesa "6.0.2"]]
+
+ :builds
+ {:package {:target :node-library
+            ;; Uncomment if you want to generate a self-contained
+            ;; JS file that does not require node_modules at all.
+            :js-options {:js-provider :shadow
+                         :keep-native-requires true
+                         :keep-as-require #{"atom"}}
+
+            :compiler-options {:infer-externs :auto}
+            :exports {:activate simple-git.core/activate
+                      :deactivate simple-git.core/deactivate}
+            :output-to "lib/main.js"}}}
