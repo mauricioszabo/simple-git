@@ -83,13 +83,15 @@
           (cmds/info! "Not commiting" "Can't commit with an empty message"))))))
 
 (defn- commit! []
-  (p/let [{:keys [output]} (cmds/run-git "diff" "--staged")
-          commit-msg (diff-prompt! "Commit message" output)]
-    (if commit-msg
-      (do
-        (cmds/run-git-treating-errors "commit" "-m" commit-msg)
-        (refresh-repos!))
-      (cmds/info! "Not commiting" "Can't commit with an empty message"))))
+  (p/let [{:keys [output]} (cmds/run-git "diff" "--staged")]
+    (if (empty? output)
+      (cmds/info! "No changes" "No changes staged to commit - try to add files first")
+      (p/let [commit-msg (diff-prompt! "Commit message" output)]
+        (if commit-msg
+          (do
+            (cmds/run-git-treating-errors "commit" "-m" commit-msg)
+            (refresh-repos!))
+          (cmds/info! "Not commiting" "Can't commit with an empty message"))))))
 
 (defn- add-cmd! [command fun]
   (.add @subscriptions
