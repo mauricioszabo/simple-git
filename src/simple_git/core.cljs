@@ -72,13 +72,15 @@
 
 (defn- quick-commit! []
   (p/let [file (cmds/current-file!)
-          {:keys [output]} (cmds/run-git "diff" "HEAD" file)
-          commit-msg (diff-prompt! (str "Commit message for " (simplify file)) output)]
-    (if commit-msg
-      (do
-        (cmds/run-git-treating-errors "commit" file "-m" commit-msg)
-        (refresh-repos!))
-      (cmds/info! "Not commiting" "Can't commit with an empty message"))))
+          {:keys [output]} (cmds/run-git "diff" "HEAD" file)]
+    (if (empty? output)
+      (cmds/info! "No changes" "No changes in the current file - refusing to commit")
+      (p/let [commit-msg (diff-prompt! (str "Commit message for " (simplify file)) output)]
+        (if commit-msg
+          (do
+            (cmds/run-git-treating-errors "commit" file "-m" commit-msg)
+            (refresh-repos!))
+          (cmds/info! "Not commiting" "Can't commit with an empty message"))))))
 
 (defn- commit! []
   (p/let [{:keys [output]} (cmds/run-git "diff" "--staged")
