@@ -51,9 +51,6 @@
         style (.-style diff-elem)
         outer-div (js/document.createElement "div")]
 
-    ()
-    ; (.setProperty style "height" "100%")
-    ; (.setProperty style "overflow" "scroll")
     (aset diff-elem "innerHTML" (diff->html diff-str))
     (.. diff-elem -classList (add "native-key-bindings"))
     (.append outer-div diff-elem)
@@ -109,7 +106,6 @@
                                 #(cmds/run-git-treating-errors "add" (cmds/current-file!)))))
   (add-cmd! "quick-commit-current-file" quick-commit!)
   (add-cmd! "commit" commit!))
-
 
 (defn deactivate [state]
   (.dispose ^js @subscriptions))
