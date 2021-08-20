@@ -1,7 +1,7 @@
 (ns simple-git.core
   (:require [simple-git.cmds :as cmds]
             [promesa.core :as p]
-            ["diff2html" :as diff]
+            ["diff2html/lib/ui/js/diff2html-ui.js" :refer [Diff2HtmlUI]]
             ["atom" :refer [CompositeDisposable TextEditor]]))
 
 (def subscriptions (atom (CompositeDisposable.)))
@@ -40,10 +40,6 @@
     (generate-view placeholder p)
     p))
 
-(defn- diff->html [diff-str]
-  (let [parsed (.parse diff diff-str)]
-    (.html diff parsed #js {:drawFileList true})))
-
 (def ^:private translate-langs
   {"cljs" "clj"
    "cljc" "clj"
@@ -63,12 +59,12 @@
 (defn diff-prompt! [placeholder diff-str]
   (let [p (p/deferred)
         html (generate-view placeholder p)
-        diff-elem (js/document.createElement "div")
+        diff-elem (doto (js/document.createElement "div")
+                        (.. -classList (add "simple-git")))
         style (.-style diff-elem)
         outer-div (js/document.createElement "div")]
 
     (append-diff! diff-str diff-elem)
-    ; (aset diff-elem "innerHTML" (diff->html diff-str))
     (.. diff-elem -classList (add "native-key-bindings"))
     (.append outer-div diff-elem)
     (.append html outer-div)
