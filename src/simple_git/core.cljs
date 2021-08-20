@@ -111,7 +111,10 @@
                                 #(cmds/run-git-treating-errors "add" (cmds/current-file!)))))
   (add-cmd! "quick-commit-current-file" quick-commit!)
   (add-cmd! "commit" commit!)
-  (add-cmd! "push-current-branch" push!))
+  (add-cmd! "push-current-branch" push!)
+  (add-cmd! "new-branch-from-current"
+            #(p/let [branch-name (prompt! "Type a valid branch name")]
+               (cmds/run-git-treating-errors "checkout" "-b" branch-name))))
 
 (defn deactivate [state]
   (.dispose ^js @subscriptions))
