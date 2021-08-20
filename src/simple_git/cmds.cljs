@@ -1,5 +1,6 @@
 (ns simple-git.cmds
-  (:require ["child_process" :refer [spawn]]
+  (:require [clojure.string :as str]
+            ["child_process" :refer [spawn]]
             ["path" :refer [dirname]]
             [promesa.core :as p]))
 
@@ -28,6 +29,10 @@
       p)
     (catch :default e
       (p/rejected {:output (.-message e)}))))
+
+(defn current-branch []
+  (p/let [{:keys [output]} (run-git "rev-parse" "--abbrev-ref" "HEAD")]
+    (str/trim output)))
 
 (defn success! [message details]
   (.. js/atom -notifications (addSuccess message #js {:detail details})))

@@ -93,6 +93,10 @@
             (refresh-repos!))
           (cmds/info! "Not commiting" "Can't commit with an empty message"))))))
 
+(defn- push! []
+  (p/let [current (cmds/current-branch)]
+    (cmds/run-git-treating-errors "push" "--set-upstream" "origin" current)))
+
 (defn- add-cmd! [command fun]
   (.add @subscriptions
         (.. js/atom -commands (add "atom-text-editor" (str "git:" command) fun))))
@@ -105,7 +109,8 @@
                                 "git:add-current-file"
                                 #(cmds/run-git-treating-errors "add" (cmds/current-file!)))))
   (add-cmd! "quick-commit-current-file" quick-commit!)
-  (add-cmd! "commit" commit!))
+  (add-cmd! "commit" commit!)
+  (add-cmd! "push-current-branch" push!))
 
 (defn deactivate [state]
   (.dispose ^js @subscriptions))
