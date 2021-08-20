@@ -1,8 +1,10 @@
 (ns simple-git.core
   (:require [simple-git.cmds :as cmds]
+            [clojure.string :as str]
             [promesa.core :as p]
             ["diff2html/lib/ui/js/diff2html-ui.js" :refer [Diff2HtmlUI]]
-            ["atom" :refer [CompositeDisposable TextEditor]]))
+            ["atom" :refer [CompositeDisposable TextEditor]]
+            ["path" :refer [dirname]]))
 
 (def subscriptions (atom (CompositeDisposable.)))
 
@@ -111,19 +113,44 @@
   (.add @subscriptions
         (.. js/atom -commands (add "atom-text-editor" (str "git:" command) fun))))
 
+(defrecord DiffClass [title file]
+  Object
+  (getTitle [_] title)
+  (destroy [this]
+    (-> (filter #(.. ^js % getItems (includes this))
+                (.. js/atom -workspace getPanes))
+        first
+        (some-> (.removeItem this)))))
+
+(defn view-provider [{:keys [file]}]
+  (let [div (doto (js/document.createElement "div")
+                  (.. -classList (add "native-key-bindings" "simple-git"))
+                  (.. -style (setProperty "overflow" "scroll")))]
+    (p/let [{:keys [output]} (cmds/run-git-in-dir ["diff" file] (dirname file))]
+      (append-diff! output div))
+    div))
+
 (defn activate [state]
   (reset! atom-state state)
 
-  (.add @subscriptions (.. js/atom -commands
-                           (add "atom-text-editor"
-                                "git:add-current-file"
-                                #(cmds/run-git-treating-errors "add" (cmds/current-file!)))))
+  (.add @subscriptions
+        (.. js/atom
+            -workspace
+            (addOpener #(when-let [[_ uri] (re-matches #"diff://(.*)" %)]
+                          (->DiffClass (str "Diff for " uri) uri)))))
+
+  (.add @subscriptions
+        (.. js/atom -views (addViewProvider DiffClass view-provider)))
+  (add-cmd! "add-current-file" #(cmds/run-git-treating-errors "add" (cmds/current-file!)))
   (add-cmd! "quick-commit-current-file" quick-commit!)
   (add-cmd! "commit" commit!)
   (add-cmd! "push-current-branch" push!)
   (add-cmd! "new-branch-from-current"
             #(p/let [branch-name (prompt! "Type a valid branch name")]
-               (cmds/run-git-treating-errors "checkout" "-b" branch-name))))
+               (cmds/run-git-treating-errors "checkout" "-b" branch-name)))
+
+  (add-cmd! "show-diff-for-current-file"
+            #(.. js/atom -workspace (open (str "diff://" (cmds/current-file!))))))
 
 (defn deactivate [state]
   (.dispose ^js @subscriptions))

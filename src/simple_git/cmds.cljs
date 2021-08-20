@@ -7,10 +7,10 @@
 (defn current-file! []
   (.. js/atom.workspace getActiveTextEditor getPath))
 
-(defn run-git [ & args]
+(defn run-git-in-dir [args current-dir]
   (try
     (let [p (p/deferred)
-          git (spawn "git" (clj->js args) #js {:cwd (dirname (current-file!))})
+          git (spawn "git" (clj->js args) #js {:cwd current-dir})
           out (atom "")
           err (atom "")
           both (atom "")]
@@ -29,6 +29,9 @@
       p)
     (catch :default e
       (p/rejected {:output (.-message e)}))))
+
+(defn run-git [ & args]
+  (run-git-in-dir args (dirname (current-file!))))
 
 (defn current-branch []
   (p/let [{:keys [output]} (run-git "rev-parse" "--abbrev-ref" "HEAD")]
