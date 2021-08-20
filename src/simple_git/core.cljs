@@ -49,12 +49,10 @@
   (let [diff (new Diff2HtmlUI elem diff-str #js {:highlight true})]
     (.draw diff)
     (doseq [n (. elem querySelectorAll "*[data-lang]")
-            :let [lang (translate-langs (.. n -dataset -lang))
-                  _ (prn :WAT lang)]
+            :let [lang (translate-langs (.. n -dataset -lang))]
             :when lang]
       (set! (.. n -dataset -lang) lang))
    (.highlightCode diff)))
-
 
 (defn diff-prompt! [placeholder diff-str]
   (let [p (p/deferred)
@@ -89,11 +87,9 @@
     (if (empty? output)
       (cmds/info! "No changes" "No changes in the current file - refusing to commit")
       (p/let [commit-msg (diff-prompt! (str "Commit message for " (simplify file)) output)]
-        (if commit-msg
-          (do
-            (cmds/run-git-treating-errors "commit" file "-m" commit-msg)
-            (refresh-repos!))
-          (cmds/info! "Not commiting" "Can't commit with an empty message"))))))
+        (when commit-msg
+          (cmds/run-git-treating-errors "commit" file "-m" commit-msg)
+          (refresh-repos!))))))
 
 (defn- commit! []
   (p/let [{:keys [output]} (cmds/run-git "diff" "--staged")]
