@@ -44,6 +44,22 @@
   (let [parsed (.parse diff diff-str)]
     (.html diff parsed #js {:drawFileList true})))
 
+(def ^:private translate-langs
+  {"cljs" "clj"
+   "cljc" "clj"
+   "cljx" "clj"})
+
+(defn- append-diff! [diff-str elem]
+  (let [diff (new Diff2HtmlUI elem diff-str #js {:highlight true})]
+    (.draw diff)
+    (doseq [n (. elem querySelectorAll "*[data-lang]")
+            :let [lang (translate-langs (.. n -dataset -lang))
+                  _ (prn :WAT lang)]
+            :when lang]
+      (set! (.. n -dataset -lang) lang))
+   (.highlightCode diff)))
+
+
 (defn diff-prompt! [placeholder diff-str]
   (let [p (p/deferred)
         html (generate-view placeholder p)
@@ -51,7 +67,8 @@
         style (.-style diff-elem)
         outer-div (js/document.createElement "div")]
 
-    (aset diff-elem "innerHTML" (diff->html diff-str))
+    (append-diff! diff-str diff-elem)
+    ; (aset diff-elem "innerHTML" (diff->html diff-str))
     (.. diff-elem -classList (add "native-key-bindings"))
     (.append outer-div diff-elem)
     (.append html outer-div)
