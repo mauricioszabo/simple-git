@@ -95,7 +95,8 @@
 
 (defn- push! []
   (p/let [current (cmds/current-branch)]
-    (cmds/run-git-treating-errors "push" "--set-upstream" "origin" current)))
+    (cmds/run-git-treating-errors "push" "--set-upstream" "origin" current)
+    (refresh-repos!)))
 
 (defn- add-cmd! [command fun]
   (.add @subscriptions
