@@ -124,53 +124,71 @@
 
 (defn- get-diff! [state pos file]
   (let [dir (dirname file)]
-    (if-let [diff (get-in @state [0 4])]
+    (if-let [diff (get-in @state [pos 4])]
       diff
       (p/let [commit (get-in @state [pos 0])
+              _ (prn :COMM commit)
               {:keys [output]} (cmds/run-git-in-dir ["diff" commit file] dir)]
-        (swap! state update-in [pos 4] output)
+        (swap! state assoc-in [pos 4] output)
         output))))
 
 (defn- prepare-history [file]
   (p/let [dir (dirname file)
-          logs (cmds/run-git-in-dir ["log" "--format=format:'%h..%aI..%s..%an'"
+          logs (cmds/run-git-in-dir ["log" "--format=format:%h..%aI..%an..%s"
                                      "--follow" file]
                                     dir)
           unstaged-diff (cmds/run-git-in-dir ["diff" file] dir)
           logs (->> logs
                     :output
                     str/split-lines
-                    (mapv (fn [s]
-                            (-> s
-                                (str/split #"\.\." 4)
-                                (update 1 #(js/Date. %)))))
+                    (mapv #(str/split % #"\.\." 4))
                     atom)]
     (when (-> unstaged-diff :output not-empty)
       (swap! logs
              #(->> %
-                   (cons ["UNSTAGED" (js/Date.) "UNSTAGED" "<no-author>" (:output unstaged-diff)])
+                   (cons ["UNSTAGED" (.toISOString (js/Date.))
+                          "<no-author>" "UNSTAGED" (:output unstaged-diff)])
                    vec)))
     logs))
 
-(defn- history-ui [state div]
-  (doseq [[commit date msg author] @state
+(defn- replace-diff-view! [{:keys [file pos view state]}]
+  (p/let [dir (dirname file)
+          diff (get-diff! state pos file)]
+    (js/console.log diff)
+    (append-diff! diff view)))
+
+#_
+(js/console.log diff)
+#_
+(aset view "innerHTML" "")
+
+(defn- history-ui [state div diff-view file]
+  (doseq [[[commit date author msg] idx] (map vector @state (range))
           :let [row (doto (js/document.createElement "div")
-                          (.. -style (setProperty "flex-direction" "row")))
+                          (.. -classList (add "row")))
                 commit-link (doto (js/document.createElement "a")
                                   (aset "href" "#")
                                   (aset "innerText" commit)
-                                  (aset "onclick" (fn []
-                                                    (prn :HELLO!))))]]
-    (.append row commit-link)
-    (.append row (str date "-" author "-" msg))
+                                  (aset "onclick" (fn [e]
+                                                    (.preventDefault e)
+                                                    (replace-diff-view! {:file file
+                                                                         :pos idx
+                                                                         :view diff-view
+                                                                         :state state}))))]]
+    (.append row (doto (js/document.createElement "div")
+                       (.. -classList (add "badge" "badge-medium" "badge-info" "icon-git-commit"))
+                       (.append commit-link)))
+    (.append row (doto (js/document.createElement "div") (.append date)))
+    (.append row (doto (js/document.createElement "div") (.append author)))
+    (.append row (doto (js/document.createElement "div") (.append msg)))
     (.append div row)))
 
 (defn view-provider [{:keys [file]}]
   (let [diff-view (doto (js/document.createElement "div")
-                        (.. -classList (add "native-key-bindings" "simple-git"))
+                        (.. -classList (add "native-key-bindings" "simple-git" "diff-view"))
                         (.. -style (setProperty "overflow" "scroll")))
         history-view (doto (js/document.createElement "div")
-                           (.. -classList (add "native-key-bindings"))
+                           (.. -classList (add "native-key-bindings" "simple-git" "history"))
                            (.. -style (setProperty "overflow" "scroll"))
                            (.. -style (setProperty "flex-direction" "column")))
         root (doto (js/document.createElement "div")
@@ -178,7 +196,7 @@
     (p/let [history (prepare-history file)
             diff (get-diff! history 0 file)]
       (.. root -style (setProperty "display" "flex"))
-      (history-ui history history-view)
+      (history-ui history history-view diff-view file)
       (append-diff! diff diff-view)
       (.append root diff-view)
       (.append root history-view))
