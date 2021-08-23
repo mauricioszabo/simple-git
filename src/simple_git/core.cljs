@@ -223,7 +223,12 @@
   (add-cmd! "show-diff-for-current-file"
             #(.. js/atom -workspace (open (str "diff://" (cmds/current-file!)))))
   (add-cmd! "show-diff-for-project"
-            #(.. js/atom -workspace (open (str "diff://<project>")))))
+            #(.. js/atom -workspace (open (str "diff://<project>"))))
+  (add-cmd! "checkout-and-update-default-branch"
+            #(p/let [default (cmds/default-branch)]
+               (cmds/run-git "checkout" default)
+               (cmds/run-git-treating-errors "pull")
+               (refresh-repos!))))
 
 (defn deactivate [state]
   (.dispose ^js @subscriptions))
