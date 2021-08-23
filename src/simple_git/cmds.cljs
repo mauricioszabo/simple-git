@@ -10,6 +10,7 @@
 (defn run-git-in-dir [args current-dir]
   (try
     (let [p (p/deferred)
+          args (remove nil? args)
           git (spawn "git" (clj->js args) #js {:cwd current-dir})
           out (atom "")
           err (atom "")

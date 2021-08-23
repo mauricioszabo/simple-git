@@ -137,7 +137,7 @@
 (defn- prepare-history [file]
   (p/let [dir (dirname file)
           logs (cmds/run-git-in-dir ["log" "--format=format:%h..%aI..%an..%s"
-                                     "--follow" file]
+                                     (when file "--follow") file]
                                     dir)
           unstaged-diff (cmds/run-git-in-dir ["diff" file] dir)
           logs (->> logs
@@ -180,11 +180,14 @@
     (.append div row)))
 
 (defn view-provider [{:keys [file]}]
-  (let [diff-view (doto (js/document.createElement "div")
+  (let [file (if (= "<project>" file) nil file)
+        diff-view (doto (js/document.createElement "div")
                         (.. -classList (add "native-key-bindings" "simple-git" "diff-view"))
+                        (.setAttribute "tabindex" 1)
                         (.. -style (setProperty "overflow" "scroll")))
         history-view (doto (js/document.createElement "div")
                            (.. -classList (add "native-key-bindings" "simple-git" "history"))
+                           (.setAttribute "tabindex" 2)
                            (.. -style (setProperty "overflow" "scroll"))
                            (.. -style (setProperty "flex-direction" "column")))
         root (doto (js/document.createElement "div")
@@ -218,7 +221,9 @@
                (cmds/run-git-treating-errors "checkout" "-b" branch-name)))
 
   (add-cmd! "show-diff-for-current-file"
-            #(.. js/atom -workspace (open (str "diff://" (cmds/current-file!))))))
+            #(.. js/atom -workspace (open (str "diff://" (cmds/current-file!)))))
+  (add-cmd! "show-diff-for-project"
+            #(.. js/atom -workspace (open (str "diff://<project>")))))
 
 (defn deactivate [state]
   (.dispose ^js @subscriptions))
