@@ -127,8 +127,10 @@
     (if-let [diff (get-in @state [pos 4])]
       diff
       (p/let [commit (get-in @state [pos 0])
-              _ (prn :COMM commit)
-              {:keys [output]} (cmds/run-git-in-dir ["diff" commit file] dir)]
+              {:keys [output]} (cmds/run-git-in-dir ["diff"
+                                                     (str commit "^.." commit)
+                                                     file]
+                                                    dir)]
         (swap! state assoc-in [pos 4] output)
         output))))
 
@@ -154,13 +156,7 @@
 (defn- replace-diff-view! [{:keys [file pos view state]}]
   (p/let [dir (dirname file)
           diff (get-diff! state pos file)]
-    (js/console.log diff)
     (append-diff! diff view)))
-
-#_
-(js/console.log diff)
-#_
-(aset view "innerHTML" "")
 
 (defn- history-ui [state div diff-view file]
   (doseq [[[commit date author msg] idx] (map vector @state (range))
