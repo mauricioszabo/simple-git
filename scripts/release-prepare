@@ -5,4 +5,4 @@ git checkout -b release-tag-dont-publish-this
 npx shadow-cljs release package --debug
 rm lib/main.js.map
 git add --force lib/main.js
-git rm --recursive scripts src
+git rm -r scripts src
