@@ -6,3 +6,4 @@ npx shadow-cljs release package --debug
 rm lib/main.js.map
 git add --force lib/main.js
 git rm -r scripts src
+git commit -m 'Compiled release version'
