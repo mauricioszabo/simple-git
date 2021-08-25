@@ -1,5 +1,6 @@
 ## NEXT
 * Modernizing codebase
+* Toggle blame scrolls (kinda) the editor
 
 ## 0.1.2 - editor branch status fix
 * Refresh editor's current branch when changing branches

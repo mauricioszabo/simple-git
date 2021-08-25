@@ -98,11 +98,9 @@
     (if (empty? output)
       (cmds/info! "No changes" "No changes staged to commit - try to add files first")
       (p/let [commit-msg (diff-prompt! "Commit message" output)]
-        (if commit-msg
-          (do
-            (cmds/run-git-treating-errors "commit" "-m" commit-msg)
-            (refresh-repos!))
-          (cmds/info! "Not commiting" "Can't commit with an empty message"))))))
+        (when commit-msg
+          (cmds/run-git-treating-errors "commit" "-m" commit-msg)
+          (refresh-repos!))))))
 
 (defn- push! []
   (p/let [current (cmds/current-branch)]
@@ -201,6 +199,54 @@
       (.append root history-view))
     root))
 
+(defn- aggregate-commit [blame-str]
+  (->> blame-str
+       str/split-lines
+       (map #(-> %
+                 (str/split #"\t" 4)
+                 (update 3 str/split #"\)" 2)))
+       (reduce (fn [acc val]
+                 (let [[last-commit] (peek acc)
+                       commit (first val)]
+                   (if (= last-commit commit)
+                     acc
+                     (conj acc val))))
+               [])))
+
+(defn- decorate-editor! [^js editor]
+  (p/let [path (.getPath editor)
+          {:keys [output]} (cmds/run-git-in-dir ["blame" "-M" "-w" "-c" path]
+                                                (dirname path))
+          blame (aggregate-commit output)
+          blames (for [[commit author time [row-str]] blame
+                       :let [row (-> row-str js/parseInt dec)
+                             div (doto (js/document.createElement "div")
+                                       (.. -classList (add "simple-git" "blame")))
+                             mark (. editor markScreenPosition #js [row, 0])]]
+                    (do
+                      (.append div (doto (js/document.createElement "div")
+                                         (aset "innerText" commit)))
+                      (.append div (doto (js/document.createElement "div")
+                                         (aset "innerText" (subs author 1))))
+                      (.append div (doto (js/document.createElement "div")
+                                         (aset "innerText" time)))
+                      (. editor decorateMarker mark #js {:type "block"
+                                                         :position "before"
+                                                         :item div})
+                      mark))]
+
+    (aset editor "__blames" (doall blames))
+    (.. js/atom -workspace getActiveTextEditor scrollToCursorPosition)))
+
+(defn- blame! []
+  (let [editor (.. js/atom -workspace getActiveTextEditor)]
+    (if-let [blames (.-__blames editor)]
+      (do
+        (aset editor "__blames" nil)
+        (doseq [^js b blames] (.destroy b))
+        (. editor scrollToCursorPosition))
+      (decorate-editor! (.. js/atom -workspace getActiveTextEditor)))))
+
 (defn activate [state]
   (reset! atom-state state)
 
@@ -224,6 +270,7 @@
             #(.. js/atom -workspace (open (str "diff://" (cmds/current-file!)))))
   (add-cmd! "show-diff-for-project"
             #(.. js/atom -workspace (open (str "diff://<project>"))))
+  (add-cmd! "toggle-blame" blame!)
   (add-cmd! "checkout-and-update-default-branch"
             #(p/let [default (cmds/default-branch)]
                (cmds/run-git "checkout" default)
