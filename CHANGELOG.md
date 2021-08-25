@@ -1,4 +1,6 @@
 ## NEXT
+
+## 0.3.0
 * Modernizing codebase
 * Toggle blame scrolls (kinda) the editor
 
