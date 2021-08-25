@@ -98,8 +98,9 @@
     (if (empty? output)
       (cmds/info! "No changes" "No changes staged to commit - try to add files first")
       (p/let [commit-msg (diff-prompt! "Commit message" output)]
-        (cmds/run-git-treating-errors "commit" "-m" commit-msg)
-        (refresh-repos!)))))
+        (when commit-msg
+          (cmds/run-git-treating-errors "commit" "-m" commit-msg)
+          (refresh-repos!))))))
 
 (defn- push! []
   (p/let [current (cmds/current-branch)]
