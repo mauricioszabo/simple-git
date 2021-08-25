@@ -34,3 +34,28 @@ div.simple-git.history {
     }
   }
 }
+
+// BLAME
+div.simple-git.diff-view {
+  font-size: @input-font-size !important;
+  width: 100%;
+  .d2h-diff-table {
+    font-size: @input-font-size !important;
+  }
+}
+
+div.simple-git.blame {
+  display: flex;
+  background: @syntax-gutter-background-color;
+
+  border-top: solid 1px;
+  border-color: @syntax-gutter-text-color;
+  color: @syntax-text-color;
+  div {
+    margin-left: 1em;
+  }
+
+  div:nth-child(3) {
+    font-style: italic;
+  }
+}
