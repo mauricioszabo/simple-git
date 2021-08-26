@@ -54,6 +54,7 @@
         (p/catch #(error! "Error running command" (:output %)))
         (p/then #(constantly result)))))
 
-(defn default-branch []
-  (p/let [{:keys [output]} (run-git "remote" "show" "origin")]
-    (->> output (re-find #"HEAD branch: (.*)") second)))
+(def default-branch
+  (memoize (fn []
+             (p/let [{:keys [output]} (run-git "remote" "show" "origin")]
+               (->> output (re-find #"HEAD branch: (.*)") second)))))

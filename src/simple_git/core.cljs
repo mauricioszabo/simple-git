@@ -102,10 +102,30 @@
           (cmds/run-git-treating-errors "commit" "-m" commit-msg)
           (refresh-repos!))))))
 
+(defn- protect-commit! [fun]
+  (if (.. js/atom -config (get "simple-git.denyCommit"))
+    (p/let [current-branch (cmds/current-branch)
+            default (cmds/default-branch)]
+      (if (= current-branch default)
+        (cmds/error! "Can't commit" (str "Can't commit to " default
+                                         ". Please, create a branch and commit from there"))
+        (fun)))
+    (fun)))
+
+(defn- push-branch! [current]
+  (p/do!
+   (cmds/run-git-treating-errors "push" "--set-upstream" "origin" current)
+   (refresh-repos!)))
+
 (defn- push! []
   (p/let [current (cmds/current-branch)]
-    (cmds/run-git-treating-errors "push" "--set-upstream" "origin" current)
-    (refresh-repos!)))
+    (if (.. js/atom -config (get "simple-git.denyPush"))
+      (p/let [default (cmds/default-branch)]
+        (if (= default current)
+          (cmds/error! "Can't push" (str "Can't push to " default
+                                         ". Please, create a branch and push from there"))
+          (push-branch! current)))
+      (push-branch! current))))
 
 (defn- add-cmd! [command fun]
   (.add @subscriptions
@@ -259,8 +279,8 @@
   (.add @subscriptions
         (.. js/atom -views (addViewProvider DiffClass view-provider)))
   (add-cmd! "add-current-file" #(cmds/run-git-treating-errors "add" (cmds/current-file!)))
-  (add-cmd! "quick-commit-current-file" quick-commit!)
-  (add-cmd! "commit" commit!)
+  (add-cmd! "quick-commit-current-file" #(protect-commit! quick-commit!))
+  (add-cmd! "commit" #(protect-commit! commit!))
   (add-cmd! "push-current-branch" push!)
   (add-cmd! "new-branch-from-current"
             #(p/let [branch-name (prompt! "Type a valid branch name")]
@@ -287,3 +307,12 @@
   (reset! subscriptions (CompositeDisposable.))
   (activate @atom-state)
   (cmds/info! "Reloaded plug-in" ""))
+
+(def config
+  (clj->js
+   {:denyCommit {:description "Deny commits on default (master/main) branch"
+                 :type "boolean"
+                 :default true}
+    :denyPush {:description "Deny pushes to remote default (master/main) branch"
+               :type "boolean"
+               :default true}}))

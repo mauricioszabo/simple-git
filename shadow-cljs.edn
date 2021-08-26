@@ -12,5 +12,6 @@
 
             :compiler-options {:infer-externs :auto}
             :exports {:activate simple-git.core/activate
-                      :deactivate simple-git.core/deactivate}
+                      :deactivate simple-git.core/deactivate
+                      :config simple-git.core/config}
             :output-to "lib/main.js"}}}
