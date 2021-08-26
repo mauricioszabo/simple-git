@@ -8,7 +8,7 @@ I use GIT from terminal, like most of the people I work with. One of the things 
 
 So, I've created a bunch of scripts on my ATOM Init script to simply commit files. Then to add. Then to create a diff view... and now, integrated everything into a package.
 
-![A screenshot of your package](https://user-content.gitlab-static.net/21a7c00ae37ffd901537a6f9e1cc96b475c5283b/68747470733a2f2f7261772e67697468756275736572636f6e74656e742e636f6d2f6d6175726963696f737a61626f2f73696d706c652d6769742f6d61737465722f646f632f667261676d656e742e676966)
+![A screenshot of your package](https://gitlab.com/mauricioszabo/simple-git/-/raw/master/doc/fragment.gif)
 
 ## What does this package do?
 
