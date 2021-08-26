@@ -1,10 +1,10 @@
 {
   "name": "simple-git",
   "main": "./lib/main.js",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A short description of your package",
   "keywords": [],
-  "repository": "https://github.com/mauricioszabo/simple-git",
+  "repository": "https://gitlab.com/mauricioszabo/simple-git",
   "license": "MIT",
   "engines": {
     "atom": ">=1.0.0 <2.0.0"
