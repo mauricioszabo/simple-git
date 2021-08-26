@@ -1,7 +1,7 @@
 {
   "name": "simple-git",
   "main": "./lib/main.js",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "A short description of your package",
   "keywords": [],
   "repository": "https://gitlab.com/mauricioszabo/simple-git",
