@@ -90,8 +90,9 @@
       (cmds/info! "No changes" "No changes in the current file - refusing to commit")
       (p/let [commit-msg (diff-prompt! (str "Commit message for " (simplify file)) output)]
         (when commit-msg
-          (cmds/run-git-treating-errors "commit" file "-m" commit-msg)
-          (refresh-repos!))))))
+          (p/do!
+           (cmds/run-git-treating-errors "commit" file "-m" commit-msg)
+           (refresh-repos!)))))))
 
 (defn- commit! []
   (p/let [{:keys [output]} (cmds/run-git "diff" "--staged")]
@@ -99,8 +100,9 @@
       (cmds/info! "No changes" "No changes staged to commit - try to add files first")
       (p/let [commit-msg (diff-prompt! "Commit message" output)]
         (when commit-msg
-          (cmds/run-git-treating-errors "commit" "-m" commit-msg)
-          (refresh-repos!))))))
+          (p/do!
+           (cmds/run-git-treating-errors "commit" "-m" commit-msg)
+           (refresh-repos!)))))))
 
 (defn- protect-commit! [fun]
   (if (.. js/atom -config (get "simple-git.denyCommit"))
